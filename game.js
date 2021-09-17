@@ -33,7 +33,7 @@ function TestWall() {
         // TODO teleport to this spot
     }
     s.onMouseScroll = function() {
-        conswhm.Debugole.log("SCROLL");
+        whm.Debug.log("SCROLL");
         // TODO scroll camera
     };
     s.update = function() {
