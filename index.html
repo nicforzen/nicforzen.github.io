@@ -4,11 +4,36 @@
     <link rel="icon" href="data:,">
     <script src="whitemage.js"></script>
     <script src="game.js"></script>
+    <script>
+      function resizeCanvas() {
+            document.getElementById("canvas").width = window.innerWidth;
+            document.getElementById("canvas").height = window.innerHeight;
+        }
+
+        function entry(){
+          window.addEventListener('resize', resizeCanvas, false);
+          resizeCanvas();
+          appEntry(document.getElementById('canvas'), window.localStorage);
+        }
+    </script>
+    <style>
+      html, body {
+        width:  100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+      canvas{
+        position:absolute;
+        top:0;left:0;
+      }
+    </style>
   </head>
-  <body onload="appEntry(document.getElementById('canvas'), window.localStorage);" bgcolor="#666666">  
+  <body onload="entry()" bgcolor="#666666">  
     <center>
         <!--<canvas id="canvas" width="1194" height="672"></canvas>-->
-        <canvas id="canvas" width="860" height="640"></canvas>
+        <!-- <canvas id="canvas" width="860" height="640"></canvas> -->
+        <canvas id="canvas" width="320" height="430"></canvas>
         <!-- <canvas id="canvas" width="224" height="398"></canvas> -->
     </center>  
 </body>

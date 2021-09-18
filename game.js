@@ -8,6 +8,7 @@ function TestScene() {
     this.start = function() {
         console.log("Scene loaded");
         this.instance.addObject(TestWall());
+        this.instance.render.wingColor = whm.Color.WHITE;
     };
     this.onRender = function() {
         this.instance.render.fillCanvas(whm.Color.fromHexString("#191970"));
