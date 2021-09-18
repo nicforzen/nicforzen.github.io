@@ -8,7 +8,6 @@ function TestScene() {
     this.start = function() {
         console.log("Scene loaded");
         this.instance.addObject(TestWall());
-        this.instance.render.wingColor = whm.Color.WHITE;
     };
     this.onRender = function() {
         this.instance.render.fillCanvas(whm.Color.fromHexString("#191970"));
@@ -31,14 +30,17 @@ function TestWall() {
     let s = new whm.Script();
     s.onMouseDown = function(e) {
         whm.Debug.log("Click!");
-        // TODO teleport to this spot
+        this.gameObject.transform.position = new whm.Vector2(e.x, e.y);
+        this.gameObject.rigidbody.velocity = new whm.Vector2();
+        this.gameObject.rigidbody._b2Body.setAwake(true);
     }
     s.onMouseScroll = function() {
         whm.Debug.log("SCROLL");
         // TODO scroll camera
     };
     s.update = function() {
-        //console.log(this);
+        //console.log(this.gameObject.transform.position.y);
+        //console.log(this.gameObject.rigidbody.velocity.y);
     }
     s.start = function(){
         whm.Debug.log("hi");
