@@ -35,7 +35,15 @@ function TestWall() {
         // this.gameObject.rigidbody.velocity = new whm.Vector2();
         // this.gameObject.rigidbody._b2Body.setAwake(true);
         let ch2 = new whm.GameObject();
+        let ss = new whm.Script();
+        ss.update = function() {
+            //console.log(this.gameObject.transform.rotation.radians);
+        }
+        ch2.addScript(ss);
         ch2.transform.position = new whm.Vector2(e.x/10, e.y/10);
+        // ch2.transform.position = new whm.Vector2(e.x, e.y);
+        //ch2.transform.rotation.radians = -1.5708;
+        ch2.transform.rotation.radians = 1.5708;
         ch2.renderer = new whm.RectangleRenderer(1, 1, whm.Color.RED);
         this.gameObject.instance.addObject(ch2);
     }
@@ -46,6 +54,7 @@ function TestWall() {
     s.update = function() {
         //console.log(this.gameObject.transform.position.y);
         //console.log(this.gameObject.rigidbody.velocity.y);
+        // console.log(this.gameObject.transform.rotation.radians);
     }
     s.start = function(){
         whm.Debug.log("hi");
