@@ -33,7 +33,11 @@ function TestWall() {
         // this.gameObject.transform.position = new whm.Vector2(e.x/10, e.y/10);
         // this.gameObject.rigidbody.velocity = new whm.Vector2();
         // this.gameObject.rigidbody._b2Body.setAwake(true);
-        this.gameObject.instance.addObject(getBlock(e.x, e.y));
+        if(e.button == 1){
+            this.gameObject.instance.addObject(getBlock(e.x, e.y));
+        }else{
+            this.gameObject.instance.addObject(getCircle(e.x, e.y));
+        }
     }
     s.onMouseScroll = function(e) {
         whm.Debug.log("SCROLL");
@@ -63,6 +67,7 @@ function getBlock(x, y){
     else if(colorInt == 2) color = whm.Color.BLUE;
     else if(colorInt == 3) color = whm.Color.GREEN;
     let g = new whm.GameObject();
+    g.transform.rotation.radians = Math.random() * Math.PI * 2;
     g.transform.position = new whm.Vector2(x, y);
     g.addComponent(new whm.Rigidbody());
     let c = new whm.BoxCollider(bx, by);
@@ -70,6 +75,33 @@ function getBlock(x, y){
     c.bounce = 0.3;
     g.addComponent(c);
     g.renderer = new whm.RectangleRenderer(bx, by, color);
+    let s = new whm.Script();
+    g.metadata.timer = 0;
+    s.update = function() {
+        this.gameObject.metadata.timer += this.gameObject.instance.deltaTime;
+        if(this.gameObject.metadata.timer > 10) this.gameObject.instance.destroyObject(this.gameObject);
+    }
+    g.addComponent(s);
+    return g;
+}
+
+function getCircle(x, y){
+    let bx = Math.random() + 0.2;
+    let by = Math.random() + 0.2;
+    let colorInt = Math.floor(Math.random() * 4);
+    let color = whm.Color.ORANGE;
+    if(colorInt == 1) color = whm.Color.RED;
+    else if(colorInt == 2) color = whm.Color.BLUE;
+    else if(colorInt == 3) color = whm.Color.GREEN;
+    let g = new whm.GameObject();
+    g.transform.rotation.radians = Math.random() * Math.PI * 2;
+    g.transform.position = new whm.Vector2(x, y);
+    g.addComponent(new whm.Rigidbody());
+    let c = new whm.CircleCollider(bx);
+    c.friction = 0.3;
+    c.bounce = 0.3;
+    g.addComponent(c);
+    g.renderer = new whm.CircleRenderer(bx, color);
     let s = new whm.Script();
     g.metadata.timer = 0;
     s.update = function() {
