@@ -1,0 +1,6 @@
+img id=flap0 x=0 y=0 width=16 height=12 xoffset=0.5 yoffset=0.5
+img id=flap1 x=16 y=0 width=16 height=12 xoffset=0.5 yoffset=0.5
+img id=flap2 x=32 y=0 width=16 height=12 xoffset=0.5 yoffset=0.5
+
+
+

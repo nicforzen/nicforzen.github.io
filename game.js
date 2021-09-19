@@ -86,8 +86,7 @@ function getBlock(x, y){
 }
 
 function getCircle(x, y){
-    let bx = Math.random() + 0.2;
-    let by = Math.random() + 0.2;
+    let bx = (Math.random() + 0.2)/2;
     let colorInt = Math.floor(Math.random() * 4);
     let color = whm.Color.ORANGE;
     if(colorInt == 1) color = whm.Color.RED;
