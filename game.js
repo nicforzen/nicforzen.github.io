@@ -9,6 +9,7 @@ function TestScene() {
     this.start = function() {
         this.instance.camera.setScale(10);
         console.log("Scene loaded");
+        this.instance.addObject(FloorCollider());
         this.instance.addObject(TestWall());
     };
     this.onRender = function() {
@@ -55,8 +56,16 @@ function TestWall() {
     return ch;
 }
 
-
-// MAKE THE FLOOR A GAMEOBJECT
+function FloorCollider() {
+    let o = new whm.GameObject();
+    o.transform.position = new whm.Vector2(0, 5.5);
+    let r = new whm.Rigidbody();
+    r.bodyType = whm.RigidbodyType.STATIC;
+    o.addComponent(r);
+    o.addComponent(new whm.BoxCollider(20, 1));
+    o.renderer = new whm.RectangleRenderer(20, 1, whm.Color.MAGENTA);
+    return o;
+}
 
 function getBlock(x, y){
     let bx = Math.random() + 0.2;

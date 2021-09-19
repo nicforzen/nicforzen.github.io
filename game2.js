@@ -13,11 +13,14 @@ function TestScene() {
         this.instance.addObject(Background());
         this.instance.addObject(Player());
         this.instance.addObject(Floor());
+        this.instance.addObject(Pipe(5));
+        this.instance.addObject(Pipe(12.5));
     };
     this.loadAssets = function(){
         this.instance.assets.loadSpriteSheet("flap", "./flap.png", "./flap.txt");
         this.instance.assets.loadImage("bg", "./flapbg.png");
         this.instance.assets.loadImage("floor", "./flapg.png");
+        this.instance.assets.loadImage("pipe", "./pipe.png");
     }
     this.onRender = function() {
         this.instance.render.fillCanvas(whm.Color.fromHexString("#191970"));
@@ -91,7 +94,7 @@ function Floor(x) {
     o.transform.position = new whm.Vector2(xpos, 6);
     o.scale = 1/20;
     o.renderer = new whm.ImageRenderer("floor");
-    o.renderer.zorder = -1;
+    o.renderer.zorder = 1;
     o.renderer.anchorXPercent = 0;
     let speed = 4;
     let s = new whm.Script();
@@ -116,6 +119,54 @@ function FloorCollider(y) {
     let r = new whm.Rigidbody();
     r.bodyType = whm.RigidbodyType.STATIC;
     o.addComponent(r);
-    o.addComponent(new whm.BoxCollider(10, 0));
+    o.addComponent(new whm.BoxCollider(10, 1));
+    return o;
+}
+
+function Pipe(x){
+    let xpos = x || 0;
+    let o = new whm.GameObject();
+    let y = Math.floor(Math.random() * 3) + 1.5;
+    o.transform.position = new whm.Vector2(xpos, y);
+    o.scale = 1/9;
+    o.renderer = new whm.ImageRenderer("pipe");
+    o.renderer.anchorXPercent = 0;
+    let speed = 4;
+    let s = new whm.Script();
+    let madeNew = false;
+    s.update = function(){
+        this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
+        if(this.gameObject.transform.position.x < 0 && !madeNew){
+            madeNew = true;
+            this.gameObject.instance.addObject(Pipe(this.gameObject.transform.position.x+15));
+        }
+        if(this.gameObject.transform.position.x < -14){
+            this.gameObject.instance.destroyObject(this.gameObject);
+        }
+    }
+    s.start = function(){
+        this.gameObject.instance.addObject(UpperPipe(this.gameObject.transform.position.x, y));
+    }
+    o.addComponent(s);
+    return o;
+}
+
+function UpperPipe(x, y){
+    let xpos = x || 0;
+    let o = new whm.GameObject();
+    o.transform.position = new whm.Vector2(xpos, y-8);
+    o.scale = 1/9;
+    o.renderer = new whm.ImageRenderer("pipe");
+    o.renderer.anchorXPercent = 0;
+    o.renderer.flipY = true;
+    let speed = 4;
+    let s = new whm.Script();
+    s.update = function(){
+        this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
+        if(this.gameObject.transform.position.x < -14){
+            this.gameObject.instance.destroyObject(this.gameObject);
+        }
+    }
+    o.addComponent(s);
     return o;
 }
