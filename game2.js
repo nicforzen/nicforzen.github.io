@@ -5,16 +5,31 @@ async function appEntry(canvas, localStorage) {
     driver.start(canvas, localStorage);
 }
 
+var playing = false;
+var scrolling = true;
+var scoreLabel;
+var scoreLabelBlack;
+var tipLabel;
+var tipLabelBlack;
+var score = 0;
+
 function TestScene() {
     this.start = function() {
         this.instance.camera.setScale(10);
+        this.instance.addObject(Controller());
         this.instance.addObject(FloorCollider(4));
         this.instance.addObject(FloorCollider(-7));
         this.instance.addObject(Background());
-        this.instance.addObject(Player());
         this.instance.addObject(Floor());
-        this.instance.addObject(Pipe(5));
-        this.instance.addObject(Pipe(12.5));
+        scoreLabelBlack = new whm.Label("Flap", 51, 21, "Impact", whm.Color.BLACK, 20, "center", "middle");
+        scoreLabel = new whm.Label("Flap", 50, 20, "Impact", whm.Color.WHITE, 20, "center", "middle");
+        tipLabelBlack = new whm.Label("click to start", 50.5, 35.5, "Impact", whm.Color.BLACK, 7, "center", "middle");
+        tipLabel = new whm.Label("click to start", 50, 35, "Impact", whm.Color.WHITE, 7, "center", "middle");
+        this.instance.addUiItem(scoreLabelBlack);
+        this.instance.addUiItem(scoreLabel);
+        this.instance.addUiItem(tipLabelBlack);
+        this.instance.addUiItem(tipLabel);
+        //startGame(this.instance);
     };
     this.loadAssets = function(){
         this.instance.assets.loadSpriteSheet("flap", "./flap.png", "./flap.txt");
@@ -28,8 +43,42 @@ function TestScene() {
 }
 TestScene.prototype = new whm.Scene;
 
+function startGame(instance){
+    instance.addObject(Player());
+    instance.addObject(Pipe(5));
+    instance.addObject(Pipe(12.5));
+    updateLabel();
+    updateTipLabel("");
+    playing = true;
+}
+
+function resetGame(instance){
+    score = 0;
+    scrolling = true;
+    instance.destroyObjectByName("player");
+    instance.destroyObjectByName("pipe");
+}
+
+function Controller() {
+    let o = new whm.GameObject("controller");
+    let s = new whm.Script();
+    s.onMouseDown = function(e){
+        if(e.button == 1){
+            if(!playing){
+                resetGame(this.gameObject.instance);
+                startGame(this.gameObject.instance);
+            }
+        }
+    }
+    s.update = function(){
+        //console.log(this.gameObject.instance._b2World.getBodyCount());
+    }
+    o.addComponent(s);
+    return o;
+}
+
 function Player() {
-    let ch = new whm.GameObject();
+    let ch = new whm.GameObject("player");
     ch.transform.position = new whm.Vector2(-2.5, 0);
     ch.scale = 1/10;
     let s = new whm.Script();
@@ -40,9 +89,11 @@ function Player() {
     c.bounce = 0.35;
     ch.addComponent(c);
     s.onMouseDown = function(e) {
-        this.gameObject.rigidbody.velocity = new whm.Vector2(0,0);
-        this.gameObject.transform.rotation.radians = -0.6108;
-        this.gameObject.rigidbody._b2Body.applyForceToCenter(new whm.Vector2(0, -320), true);
+        if(playing && e.button == 1){
+            this.gameObject.rigidbody.velocity = new whm.Vector2(0,0);
+            this.gameObject.transform.rotation.radians = -0.6108;
+            this.gameObject.rigidbody._b2Body.applyForceToCenter(new whm.Vector2(0, -320), true);
+        }
     }
     s.update = function(e){
         if(this.gameObject.rigidbody.velocity.y < -1){
@@ -57,6 +108,14 @@ function Player() {
         let clampSpeed = whm.Util.clamp(this.gameObject.rigidbody.velocity.y, -range, range);
         clampSpeed = 2 * ( (clampSpeed - -range) / (range - -range) ) - 1
         this.gameObject.transform.rotation.radians = 0.6108 * clampSpeed;
+    }
+    s.onCollisionEnter = function(g){
+        playing = false;
+        scrolling = false;
+        updateTipLabel("click to restart");
+    }
+    s.onDestroy = function(){
+        console.log("boom!");
     }
     ch.addComponent(s);
 
@@ -75,13 +134,15 @@ function Background(x) {
     let s = new whm.Script();
     let madeNew = false;
     s.update = function(){
-        this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
-        if(this.gameObject.transform.position.x < 0 && !madeNew){
-            madeNew = true;
-            this.gameObject.instance.addObject(Background(this.gameObject.transform.position.x+17.98));
-        }
-        if(this.gameObject.transform.position.x < -14){
-            this.gameObject.instance.destroyObject(this.gameObject);
+        if(scrolling){
+            this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
+            if(this.gameObject.transform.position.x < 0 && !madeNew){
+                madeNew = true;
+                this.gameObject.instance.addObject(Background(this.gameObject.transform.position.x+17.98));
+            }
+            if(this.gameObject.transform.position.x < -14){
+                this.gameObject.instance.destroyObject(this.gameObject);
+            }
         }
     }
     o.addComponent(s);
@@ -100,13 +161,15 @@ function Floor(x) {
     let s = new whm.Script();
     let madeNew = false;
     s.update = function(){
-        this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
-        if(this.gameObject.transform.position.x < 0 && !madeNew){
-            madeNew = true;
-            this.gameObject.instance.addObject(Floor(this.gameObject.transform.position.x+15));
-        }
-        if(this.gameObject.transform.position.x < -14){
-            this.gameObject.instance.destroyObject(this.gameObject);
+        if(scrolling){
+            this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
+            if(this.gameObject.transform.position.x < 0 && !madeNew){
+                madeNew = true;
+                this.gameObject.instance.addObject(Floor(this.gameObject.transform.position.x+15));
+            }
+            if(this.gameObject.transform.position.x < -14){
+                this.gameObject.instance.destroyObject(this.gameObject);
+            }
         }
     }
     o.addComponent(s);
@@ -114,7 +177,7 @@ function Floor(x) {
 }
 
 function FloorCollider(y) {
-    let o = new whm.GameObject();
+    let o = new whm.GameObject("floor");
     o.transform.position = new whm.Vector2(0, y);
     let r = new whm.Rigidbody();
     r.bodyType = whm.RigidbodyType.STATIC;
@@ -125,23 +188,36 @@ function FloorCollider(y) {
 
 function Pipe(x){
     let xpos = x || 0;
-    let o = new whm.GameObject();
+    let o = new whm.GameObject("pipe");
     let y = Math.floor(Math.random() * 3) + 1.5;
     o.transform.position = new whm.Vector2(xpos, y);
     o.scale = 1/9;
     o.renderer = new whm.ImageRenderer("pipe");
     o.renderer.anchorXPercent = 0;
+    o.addComponent(new whm.Rigidbody());
+    o.rigidbody.gravityScale = 0;
+    let c = new whm.BoxCollider(1.7, 4.6);
+    // c.isTrigger = true;
+    o.addComponent(c);
     let speed = 4;
     let s = new whm.Script();
     let madeNew = false;
+    let addedScore = false;
     s.update = function(){
-        this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
-        if(this.gameObject.transform.position.x < 0 && !madeNew){
-            madeNew = true;
-            this.gameObject.instance.addObject(Pipe(this.gameObject.transform.position.x+15));
-        }
-        if(this.gameObject.transform.position.x < -14){
-            this.gameObject.instance.destroyObject(this.gameObject);
+        if(playing){
+            this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
+            if(this.gameObject.transform.position.x < 0 && !madeNew){
+                madeNew = true;
+                this.gameObject.instance.addObject(Pipe(this.gameObject.transform.position.x+15));
+            }
+            if(this.gameObject.transform.position.x < -4 && !addedScore){
+                addedScore = true;
+                score += 1;
+                updateLabel();
+            }
+            if(this.gameObject.transform.position.x < -14){
+                this.gameObject.instance.destroyObject(this.gameObject);
+            }
         }
     }
     s.start = function(){
@@ -151,20 +227,37 @@ function Pipe(x){
     return o;
 }
 
+function updateLabel(){
+    scoreLabel.renderer.text = score;
+    scoreLabelBlack.renderer.text = score;
+}
+
+function updateTipLabel(t){
+    tipLabel.renderer.text = t;
+    tipLabelBlack.renderer.text = t;
+}
+
 function UpperPipe(x, y){
     let xpos = x || 0;
-    let o = new whm.GameObject();
+    let o = new whm.GameObject("pipe");
     o.transform.position = new whm.Vector2(xpos, y-8);
     o.scale = 1/9;
     o.renderer = new whm.ImageRenderer("pipe");
     o.renderer.anchorXPercent = 0;
     o.renderer.flipY = true;
+    o.addComponent(new whm.Rigidbody());
+    o.rigidbody.gravityScale = 0;
+    let c = new whm.BoxCollider(1.7, 4.6);
+    // c.isTrigger = true;
+    o.addComponent(c);
     let speed = 4;
     let s = new whm.Script();
     s.update = function(){
-        this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
-        if(this.gameObject.transform.position.x < -14){
-            this.gameObject.instance.destroyObject(this.gameObject);
+        if(playing){
+            this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
+            if(this.gameObject.transform.position.x < -14){
+                this.gameObject.instance.destroyObject(this.gameObject);
+            }
         }
     }
     o.addComponent(s);
