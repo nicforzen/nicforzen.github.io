@@ -12,6 +12,9 @@ var scoreLabelBlack;
 var tipLabel;
 var tipLabelBlack;
 var score = 0;
+var maxSmacks = 2;
+
+// TODO test mouse move and up and down
 
 function TestScene() {
     this.start = function() {
@@ -32,10 +35,15 @@ function TestScene() {
         //startGame(this.instance);
     };
     this.loadAssets = function(){
-        this.instance.assets.loadSpriteSheet("flap", "./flap.png", "./flap.txt");
-        this.instance.assets.loadImage("bg", "./flapbg.png");
-        this.instance.assets.loadImage("floor", "./flapg.png");
-        this.instance.assets.loadImage("pipe", "./pipe.png");
+        let a = this.instance.assets;
+        a.loadAudio("smack", "./smack.mp3");
+        a.loadAudio("whoosh", "./whoosh.mp3");
+        a.loadAudio("fall", "./fall.mp3");
+        a.loadAudio("ding", "./ding.mp3");
+        a.loadSpriteSheet("flap", "./flap.png", "./flap.txt");
+        a.loadImage("bg", "./flapbg.png");
+        a.loadImage("floor", "./flapg.png");
+        a.loadImage("pipe", "./pipe.png");
     }
     this.onRender = function() {
         this.instance.render.fillCanvas(whm.Color.fromHexString("#191970"));
@@ -53,6 +61,7 @@ function startGame(instance){
 }
 
 function resetGame(instance){
+    maxSmacks = 2;
     score = 0;
     scrolling = true;
     instance.destroyObjectByName("player");
@@ -90,6 +99,7 @@ function Player() {
     ch.addComponent(c);
     s.onMouseDown = function(e) {
         if(playing && e.button == 1){
+            this.gameObject.instance.sound.getAudioInstance("whoosh").play();
             this.gameObject.rigidbody.velocity = new whm.Vector2(0,0);
             this.gameObject.transform.rotation.radians = -0.6108;
             this.gameObject.rigidbody._b2Body.applyForceToCenter(new whm.Vector2(0, -320), true);
@@ -110,7 +120,14 @@ function Player() {
         this.gameObject.transform.rotation.radians = 0.6108 * clampSpeed;
     }
     s.onCollisionEnter = function(g){
+        if(this.gameObject.transform.position.y < -0.5 && playing){
+            this.gameObject.instance.sound.getAudioInstance("fall").play();
+        }
         playing = false;
+        if(maxSmacks > 0){
+            maxSmacks -= 1;
+            this.gameObject.instance.sound.getAudioInstance("smack").play();
+        }
         scrolling = false;
         updateTipLabel("click to restart");
     }
@@ -135,7 +152,7 @@ function Background(x) {
     let madeNew = false;
     s.update = function(){
         if(scrolling){
-            this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
+            this.gameObject.transform.position.x -= speed * whm.Time.deltaTime;
             if(this.gameObject.transform.position.x < 0 && !madeNew){
                 madeNew = true;
                 this.gameObject.instance.addObject(Background(this.gameObject.transform.position.x+17.98));
@@ -162,7 +179,7 @@ function Floor(x) {
     let madeNew = false;
     s.update = function(){
         if(scrolling){
-            this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
+            this.gameObject.transform.position.x -= speed * whm.Time.deltaTime;
             if(this.gameObject.transform.position.x < 0 && !madeNew){
                 madeNew = true;
                 this.gameObject.instance.addObject(Floor(this.gameObject.transform.position.x+15));
@@ -205,7 +222,7 @@ function Pipe(x){
     let addedScore = false;
     s.update = function(){
         if(playing){
-            this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
+            this.gameObject.transform.position.x -= speed * whm.Time.deltaTime;
             if(this.gameObject.transform.position.x < 0 && !madeNew){
                 madeNew = true;
                 this.gameObject.instance.addObject(Pipe(this.gameObject.transform.position.x+15));
@@ -213,6 +230,7 @@ function Pipe(x){
             if(this.gameObject.transform.position.x < -4 && !addedScore){
                 addedScore = true;
                 score += 1;
+                this.gameObject.instance.sound.getAudioInstance("ding").play();
                 updateLabel();
             }
             if(this.gameObject.transform.position.x < -14){
@@ -254,7 +272,7 @@ function UpperPipe(x, y){
     let s = new whm.Script();
     s.update = function(){
         if(playing){
-            this.gameObject.transform.position.x -= speed * this.gameObject.instance.deltaTime;
+            this.gameObject.transform.position.x -= speed * whm.Time.deltaTime;
             if(this.gameObject.transform.position.x < -14){
                 this.gameObject.instance.destroyObject(this.gameObject);
             }
@@ -263,3 +281,12 @@ function UpperPipe(x, y){
     o.addComponent(s);
     return o;
 }
+
+
+
+// Save high score
+// Button state after death
+// Timer before button state
+// Fix on enter collision.........
+// Title screen with character
+// Revamp input system
