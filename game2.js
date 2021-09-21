@@ -13,6 +13,7 @@ var tipLabel;
 var tipLabelBlack;
 var score = 0;
 var maxSmacks = 2;
+var hsLabel;
 
 // TODO test mouse move and up and down
 
@@ -28,10 +29,13 @@ function TestScene() {
         scoreLabel = new whm.Label("Flap", 50, 20, "Impact", whm.Color.WHITE, 20, "center", "middle");
         tipLabelBlack = new whm.Label("click to start", 50.5, 35.5, "Impact", whm.Color.BLACK, 7, "center", "middle");
         tipLabel = new whm.Label("click to start", 50, 35, "Impact", whm.Color.WHITE, 7, "center", "middle");
+        hsLabel = new whm.Label("", 5, 5, "Impact", whm.Color.WHITE, 4, "left", "middle");
         this.instance.addUiItem(scoreLabelBlack);
         this.instance.addUiItem(scoreLabel);
         this.instance.addUiItem(tipLabelBlack);
         this.instance.addUiItem(tipLabel);
+        this.instance.addUiItem(hsLabel);
+        updateHSLabel(this.instance);
         //startGame(this.instance);
     };
     this.loadAssets = function(){
@@ -51,12 +55,19 @@ function TestScene() {
 }
 TestScene.prototype = new whm.Scene;
 
+function updateHSLabel(instance) {
+    if(instance.prefs.get("hs") && instance.prefs.get("hs") > 0){
+        hsLabel.renderer.text = "High Score: " + instance.prefs.get("hs");
+    }
+}
+
 function startGame(instance){
     instance.addObject(Player());
     instance.addObject(Pipe(5));
     instance.addObject(Pipe(12.5));
     updateLabel();
     updateTipLabel("");
+    updateHSLabel(instance);
     playing = true;
 }
 
@@ -120,19 +131,24 @@ function Player() {
         this.gameObject.transform.rotation.radians = 0.6108 * clampSpeed;
     }
     s.onCollisionEnter = function(g){
-        if(this.gameObject.transform.position.y < -0.5 && playing){
-            this.gameObject.instance.sound.getAudioInstance("fall").play();
+        if(playing){
+            if(this.gameObject.transform.position.y < -0.5 && playing){
+                this.gameObject.instance.sound.getAudioInstance("fall").play();
+            }
+            playing = false;
+            let newhs = UpdateHighScore(this.gameObject.instance, score);
+            if(maxSmacks > 0){
+                maxSmacks -= 1;
+                this.gameObject.instance.sound.getAudioInstance("smack").play();
+            }
+            scrolling = false;
+            let text = "click to restart";
+            if(newhs) text += "\nNEW HIGH SCORE";
+            updateTipLabel(text);
         }
-        playing = false;
-        if(maxSmacks > 0){
-            maxSmacks -= 1;
-            this.gameObject.instance.sound.getAudioInstance("smack").play();
-        }
-        scrolling = false;
-        updateTipLabel("click to restart");
     }
     s.onDestroy = function(){
-        console.log("boom!");
+        // console.log("boom!");
     }
     ch.addComponent(s);
 
@@ -282,9 +298,19 @@ function UpperPipe(x, y){
     return o;
 }
 
+function UpdateHighScore(instance, score){
+    let hs = instance.prefs.get("hs");
+    if(hs){
+        instance.prefs.set("hs", Math.max(score,hs));
+        return score > hs;
+    }else{
+        instance.prefs.set("hs", score)
+        return true;
+    }
+}
 
 
-// Save high score
+// Master volume and mute toggle
 // Button state after death
 // Timer before button state
 // Fix on enter collision.........
