@@ -87,7 +87,7 @@ function getBlock(x, y){
     let s = new whm.Script();
     g.metadata.timer = 0;
     s.update = function() {
-        this.gameObject.metadata.timer += this.gameObject.instance.deltaTime;
+        this.gameObject.metadata.timer += whm.Time.deltaTime;
         if(this.gameObject.metadata.timer > 10) this.gameObject.instance.destroyObject(this.gameObject);
     }
     g.addComponent(s);
@@ -113,7 +113,7 @@ function getCircle(x, y){
     let s = new whm.Script();
     g.metadata.timer = 0;
     s.update = function() {
-        this.gameObject.metadata.timer += this.gameObject.instance.deltaTime;
+        this.gameObject.metadata.timer += whm.Time.deltaTime;
         if(this.gameObject.metadata.timer > 10) this.gameObject.instance.destroyObject(this.gameObject);
     }
     g.addComponent(s);
