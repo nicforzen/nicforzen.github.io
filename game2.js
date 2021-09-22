@@ -20,7 +20,7 @@ var hsLabel;
 function TestScene() {
     this.start = function() {
         whm.Physics.ignoreLayerCollision(0, 2, true);
-        whm.AudioListener.volume = this.instance.prefs.get("vol") === null ? 0.5 : this.instance.prefs.get("vol");
+        whm.AudioListener.volume = whm.PlayerPrefs.get("vol") === null ? 0.5 : whm.PlayerPrefs.get("vol");
         this.instance.camera.setScale(10);
         this.instance.addObject(Controller());
         this.instance.addObject(FloorCollider(4));
@@ -60,8 +60,8 @@ function TestScene() {
 TestScene.prototype = new whm.Scene;
 
 function updateHSLabel(instance) {
-    if(instance.prefs.get("hs") && instance.prefs.get("hs") > 0){
-        hsLabel.renderer.text = "Best: " + instance.prefs.get("hs");
+    if(whm.PlayerPrefs.hasKey("hs") && whm.PlayerPrefs.get("hs") > 0){
+        hsLabel.renderer.text = "Best: " + whm.PlayerPrefs.get("hs");
     }
 }
 
@@ -121,7 +121,7 @@ function Player() {
         }
     }
     s.update = function(e){
-        if(playing) console.log(this.gameObject.rigidbody.velocity.y);
+        //if(playing) console.log(this.gameObject.rigidbody.velocity.y);
         if(this.gameObject.rigidbody.velocity.y < -6.5) this.gameObject.rigidbody.velocity.y = -6.5;
         if(this.gameObject.rigidbody.velocity.y < -1){
             ch.renderer.spriteName = "flap2";
@@ -142,7 +142,7 @@ function Player() {
                 this.gameObject.instance.sound.getAudioInstance("fall").play();
             }
             playing = false;
-            let newhs = UpdateHighScore(this.gameObject.instance, score);
+            let newhs = UpdateHighScore(score);
             if(maxSmacks > 0){
                 maxSmacks -= 1;
                 this.gameObject.instance.sound.getAudioInstance("smack").play();
@@ -282,7 +282,7 @@ function UpperPipe(x, y){
     let xpos = x || 0;
     let o = new whm.GameObject("pipe");
     o.layer = 2;
-    o.transform.position = new whm.Vector2(xpos, y-7.5);
+    o.transform.position = new whm.Vector2(xpos, y-7.7);
     o.scale = 1/9;
     o.renderer = new whm.ImageRenderer("pipe");
     o.renderer.anchorXPercent = 0;
@@ -306,13 +306,13 @@ function UpperPipe(x, y){
     return o;
 }
 
-function UpdateHighScore(instance, score){
-    let hs = instance.prefs.get("hs");
+function UpdateHighScore(score){
+    let hs = whm.PlayerPrefs.get("hs");
     if(hs){
-        instance.prefs.set("hs", Math.max(score,hs));
+        whm.PlayerPrefs.set("hs", Math.max(score,hs));
         return score > hs;
     }else{
-        instance.prefs.set("hs", score)
+        whm.PlayerPrefs.set("hs", score)
         return true;
     }
 }
@@ -331,7 +331,7 @@ function GetVolumeWidget(){
     s.onMouseDown = function(e){
         if(e.x > 90  && e.y < 10) {
             whm.AudioListener.volume = whm.AudioListener.volume > 0 ? 0 : 0.5;
-            this.gameObject.instance.prefs.set("vol", whm.AudioListener.volume);
+            whm.PlayerPrefs.set("vol", whm.AudioListener.volume);
             return true;
         }
     };
@@ -340,6 +340,7 @@ function GetVolumeWidget(){
 }
 
 
+// WHY VELOCITY BUG ANDROID
 // Button state after death
 // Timer before button state
 // Fix on enter collision.........
