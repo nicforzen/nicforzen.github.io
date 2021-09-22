@@ -20,7 +20,8 @@ var hsLabel;
 function TestScene() {
     this.start = function() {
         whm.Physics.ignoreLayerCollision(0, 2, true);
-        whm.AudioListener.volume = whm.PlayerPrefs.get("vol") === null ? 0.5 : whm.PlayerPrefs.get("vol");
+        whm.AudioListener.volume = whm.PlayerPrefs.get("vol") === undefined ? 0.5 : whm.PlayerPrefs.get("vol");
+        console.log(whm.PlayerPrefs.get("vol"));
         this.instance.camera.setScale(10);
         this.instance.addObject(Controller());
         this.instance.addObject(FloorCollider(4));
@@ -277,7 +278,7 @@ function updateTipLabel(t){
     tipLabel.renderer.text = t;
     tipLabelBlack.renderer.text = t;
 }
-
+ 
 function UpperPipe(x, y){
     let xpos = x || 0;
     let o = new whm.GameObject("pipe");
