@@ -114,7 +114,8 @@ function Player() {
         if(playing && e.button == 1){
             console.log("BOOST");
             this.gameObject.instance.sound.getAudioInstance("whoosh").play();
-            this.gameObject.rigidbody.velocity = new whm.Vector2(0,0);
+            this.gameObject.rigidbody.velocity = new whm.Vector2();
+            this.gameObject.rigidbody._b2Body.setLinearVelocity(new whm.Vector2());
             this.gameObject.transform.rotation.radians = -0.6108;
             this.gameObject.rigidbody._b2Body.applyForceToCenter(new whm.Vector2(0, -200), true);
         }
