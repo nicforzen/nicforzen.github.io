@@ -112,6 +112,7 @@ function Player() {
     ch.addComponent(c);
     s.onMouseDown = function(e) {
         if(playing && e.button == 1){
+            console.log("BOOST");
             this.gameObject.instance.sound.getAudioInstance("whoosh").play();
             this.gameObject.rigidbody.velocity = new whm.Vector2(0,0);
             this.gameObject.transform.rotation.radians = -0.6108;
