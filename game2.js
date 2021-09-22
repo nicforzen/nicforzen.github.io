@@ -121,6 +121,7 @@ function Player() {
         }
     }
     s.update = function(e){
+        console.log(this.gameObject.rigidbody.velocity.y);
         if(this.gameObject.rigidbody.velocity.y < -1){
             ch.renderer.spriteName = "flap2";
         }else if(this.gameObject.rigidbody.velocity.y > 1){
