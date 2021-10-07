@@ -1,8 +1,6 @@
 
 async function appEntry(canvas, localStorage) {
-    let driver = new whm.Driver(new whm.Instance(new TestScene()), canvas, localStorage)
-    driver.gameWidth = 100; driver.gameHeight = 100;
-    driver.start(canvas, localStorage);
+    new whm.Driver(new whm.Instance(new TestScene()), canvas, localStorage).start();
 }
 
 var playing = false;
@@ -14,25 +12,23 @@ var tipLabelBlack;
 var score = 0;
 var maxSmacks = 2;
 var hsLabel;
-
-// TODO test mouse move and up and down
+var deadTimer = 0;
 
 function TestScene() {
     this.start = function() {
+        this.instance.addObject(Controller());
+        this.instance.useAntiAliasing(false);
         whm.Physics.ignoreLayerCollision(0, 2, true);
         whm.AudioListener.volume = whm.PlayerPrefs.get("vol") === undefined ? 0.5 : whm.PlayerPrefs.get("vol");
-        console.log(whm.PlayerPrefs.get("vol"));
-        this.instance.camera.setScale(10);
-        this.instance.addObject(Controller());
         this.instance.addObject(FloorCollider(4));
         this.instance.addObject(FloorCollider(-7));
         this.instance.addObject(Background());
         this.instance.addObject(Floor());
-        scoreLabelBlack = new whm.Label("Flap", 51, 21, "Impact", whm.Color.BLACK, 20, "center", "middle");
-        scoreLabel = new whm.Label("Flap", 50, 20, "Impact", whm.Color.WHITE, 20, "center", "middle");
-        tipLabelBlack = new whm.Label("click to start", 50.5, 35.5, "Impact", whm.Color.BLACK, 7, "center", "middle");
-        tipLabel = new whm.Label("click to start", 50, 35, "Impact", whm.Color.WHITE, 7, "center", "middle");
-        hsLabel = new whm.Label("", 5, 5, "Impact", whm.Color.WHITE, 6, "left", "middle");
+        scoreLabelBlack = new whm.Label("Flap", 5.1, 2.1, "Impact", whm.Color.BLACK, 2, "center", "middle");
+        scoreLabel = new whm.Label("Flap", 5.0, 2.0, "Impact", whm.Color.WHITE, 2, "center", "middle");
+        tipLabelBlack = new whm.Label("click to start", 5.05, 3.55, "Impact", whm.Color.BLACK, 0.7, "center", "middle");
+        tipLabel = new whm.Label("click to start", 5.0, 3.5, "Impact", whm.Color.WHITE, 0.7, "center", "middle");
+        hsLabel = new whm.Label("", .5, .5, "Impact", whm.Color.WHITE, 0.6, "left", "middle");
         this.instance.addUiItem(scoreLabelBlack);
         this.instance.addUiItem(scoreLabel);
         this.instance.addUiItem(tipLabelBlack);
@@ -54,9 +50,6 @@ function TestScene() {
         a.loadImage("volume", "./volume.png");
         a.loadImage("novolume", "./novolume.png");
     }
-    this.onRender = function() {
-        this.instance.render.fillCanvas(whm.Color.fromHexString("#191970"));
-    };
 }
 TestScene.prototype = new whm.Scene;
 
@@ -86,13 +79,20 @@ function resetGame(instance){
 
 function Controller() {
     let o = new whm.GameObject("controller");
+    let camera = new whm.Camera();
+    camera.aspect = 1;
+    o.addComponent(camera);
     let s = new whm.Script();
-    s.onMouseDown = function(e){
-        if(e.button == 1){
-            if(!playing){
-                resetGame(this.gameObject.instance);
-                startGame(this.gameObject.instance);
+    s.update = function(){
+        if(whm.Input.getMouseButtonDown(0)){
+            if(!playing && deadTimer == 0){
+                 resetGame(this.gameObject.instance);
+                 startGame(this.gameObject.instance);
             }
+        }
+        if(!playing && deadTimer > 0){
+            deadTimer -= whm.Time.deltaTime;
+            if(deadTimer < 0) deadTimer = 0;
         }
     }
     o.addComponent(s);
@@ -105,24 +105,13 @@ function Player() {
     ch.transform.position = new whm.Vector2(-2.5, 0);
     ch.scale = 1/10;
     let s = new whm.Script();
-    ch.renderer = new whm.ImageRenderer("flap");
+    ch.renderer = new whm.SpriteRenderer(new whm.Sprite("flap", 1));
     ch.renderer.spriteName = "flap1";
     ch.addComponent(new whm.Rigidbody());
     let c = new whm.CircleCollider(0.4);
     c.bounce = 0.35;
     ch.addComponent(c);
-    s.onMouseDown = function(e) {
-        if(playing && e.button == 1){
-            console.log("BOOST");
-            this.gameObject.instance.sound.getAudioInstance("whoosh").play();
-            this.gameObject.rigidbody.velocity = new whm.Vector2();
-            this.gameObject.rigidbody._b2Body.setLinearVelocity(new whm.Vector2());
-            this.gameObject.transform.rotation.radians = -0.6108;
-            this.gameObject.rigidbody._b2Body.applyForceToCenter(new whm.Vector2(0, -200), true);
-        }
-    }
-    s.update = function(e){
-        //if(playing) console.log(this.gameObject.rigidbody.velocity.y);
+    s.update = function(){
         if(this.gameObject.rigidbody.velocity.y < -6.5) this.gameObject.rigidbody.velocity.y = -6.5;
         if(this.gameObject.rigidbody.velocity.y < -1){
             ch.renderer.spriteName = "flap2";
@@ -132,10 +121,20 @@ function Player() {
             ch.renderer.spriteName = "flap1";
         }
 
+        if(playing && whm.Input.getMouseButtonDown(0)){
+            this.gameObject.instance.sound.getAudioInstance("whoosh").play();
+            this.gameObject.rigidbody.velocity = new whm.Vector2(0, -9);
+            this.gameObject.transform.rotation.radians = -0.6108;
+        }
+
         let range = 2;
         let clampSpeed = whm.Util.clamp(this.gameObject.rigidbody.velocity.y, -range, range);
         clampSpeed = 2 * ( (clampSpeed - -range) / (range - -range) ) - 1
         this.gameObject.transform.rotation.radians = 0.6108 * clampSpeed;
+    }
+    s.onMouseDown = function(){
+        console.log("clicked!!!!");
+        whm.SceneManager.loadScene(new TestScene2());
     }
     s.onCollisionEnter = function(g){
         if(playing){
@@ -143,6 +142,7 @@ function Player() {
                 this.gameObject.instance.sound.getAudioInstance("fall").play();
             }
             playing = false;
+            deadTimer = 1;
             let newhs = UpdateHighScore(score);
             if(maxSmacks > 0){
                 maxSmacks -= 1;
@@ -154,9 +154,6 @@ function Player() {
             updateTipLabel(text);
         }
     }
-    s.onDestroy = function(){
-        // console.log("boom!");
-    }
     ch.addComponent(s);
 
     return ch;
@@ -167,7 +164,7 @@ function Background(x) {
     let o = new whm.GameObject();
     o.transform.position = new whm.Vector2(xpos, -1);
     o.scale = 1/50;
-    o.renderer = new whm.ImageRenderer("bg");
+    o.renderer = new whm.SpriteRenderer(new whm.Sprite("bg", 1));
     o.renderer.sortingOrder = -1;
     o.renderer.anchorXPercent = 0;
     let speed = 1;
@@ -178,7 +175,7 @@ function Background(x) {
             this.gameObject.transform.position.x -= speed * whm.Time.deltaTime;
             if(this.gameObject.transform.position.x < 0 && !madeNew){
                 madeNew = true;
-                this.gameObject.instance.addObject(Background(this.gameObject.transform.position.x+17.98));
+                this.gameObject.instance.addObject(Background(this.gameObject.transform.position.x+18-speed*whm.Time.deltaTime));
             }
             if(this.gameObject.transform.position.x < -14){
                 this.gameObject.instance.destroyObject(this.gameObject);
@@ -194,7 +191,7 @@ function Floor(x) {
     let o = new whm.GameObject();
     o.transform.position = new whm.Vector2(xpos, 6);
     o.scale = 1/20;
-    o.renderer = new whm.ImageRenderer("floor");
+    o.renderer = new whm.SpriteRenderer(new whm.Sprite("floor", 1));
     o.renderer.sortingOrder = 1;
     o.renderer.anchorXPercent = 0;
     let speed = 4;
@@ -222,7 +219,9 @@ function FloorCollider(y) {
     let r = new whm.Rigidbody();
     r.bodyType = whm.RigidbodyType.STATIC;
     o.addComponent(r);
-    o.addComponent(new whm.BoxCollider(10, 1));
+    let c = new whm.BoxCollider(15, 1);
+    c.friction = 0.05;
+    o.addComponent(c);
     return o;
 }
 
@@ -233,12 +232,11 @@ function Pipe(x){
     let y = Math.floor(Math.random() * 3) + 1.5;
     o.transform.position = new whm.Vector2(xpos, y);
     o.scale = 1/9;
-    o.renderer = new whm.ImageRenderer("pipe");
+    o.renderer = new whm.SpriteRenderer(new whm.Sprite("pipe", 1));
     o.renderer.anchorXPercent = 0;
     o.addComponent(new whm.Rigidbody());
     o.rigidbody.gravityScale = 0;
     let c = new whm.BoxCollider(1.7, 4.6);
-    // c.isTrigger = true;
     o.addComponent(c);
     let speed = 4;
     let s = new whm.Script();
@@ -285,13 +283,12 @@ function UpperPipe(x, y){
     o.layer = 2;
     o.transform.position = new whm.Vector2(xpos, y-7.7);
     o.scale = 1/9;
-    o.renderer = new whm.ImageRenderer("pipe");
+    o.renderer = new whm.SpriteRenderer(new whm.Sprite("pipe", 1));
     o.renderer.anchorXPercent = 0;
     o.renderer.flipY = true;
     o.addComponent(new whm.Rigidbody());
     o.rigidbody.gravityScale = 0;
     let c = new whm.BoxCollider(1.7, 4.6);
-    // c.isTrigger = true;
     o.addComponent(c);
     let speed = 4;
     let s = new whm.Script();
@@ -311,28 +308,31 @@ function UpdateHighScore(score){
     let hs = whm.PlayerPrefs.get("hs");
     if(hs){
         whm.PlayerPrefs.set("hs", Math.max(score,hs));
+        whm.PlayerPrefs.save();
         return score > hs;
     }else{
-        whm.PlayerPrefs.set("hs", score)
+        whm.PlayerPrefs.set("hs", score);
+        whm.PlayerPrefs.save();
         return true;
     }
 }
 
 function GetVolumeWidget(){
     let o = new whm.GameObject();
-    o.scale = 0.25;
-    o.transform.position = new whm.Vector2(95, 5);
-    o.renderer = new whm.ImageRenderer("volume");
+    o.scale = 0.5;
+    o.transform.position = new whm.Vector2(9.5, 0.5);
+    o.renderer = new whm.SpriteRenderer(new whm.Sprite("volume", 20));
     let s = new whm.Script();
     s.update = function(){
         let sprite = whm.AudioListener.volume > 0 ? "volume" : "novolume";
-        this.gameObject.renderer.imageName = sprite;
+        this.gameObject.renderer.sprite.texture = sprite; // TODO don't do this this is a big ole hack you need a different sprite
     };
     // TODO this is jank please fix
     s.onMouseDown = function(e){
         if(e.x > 90  && e.y < 10) {
             whm.AudioListener.volume = whm.AudioListener.volume > 0 ? 0 : 0.5;
             whm.PlayerPrefs.set("vol", whm.AudioListener.volume);
+            whm.PlayerPrefs.save();
             return true;
         }
     };
@@ -343,7 +343,4 @@ function GetVolumeWidget(){
 
 // WHY VELOCITY BUG ANDROID
 // Button state after death
-// Timer before button state
-// Fix on enter collision.........
 // Title screen with character
-// Revamp input system
