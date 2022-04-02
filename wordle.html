@@ -222,7 +222,7 @@ function processAddRow(){
     }
     // Rebuild exclude list
     let newExclude = ""
-    for(let i = 0; i < excludeList; i++){
+    for(let i = 0; i < excludeList.length; i++){
         if(!includeList.includes(excludeList[i])){
             newExclude += excludeList[i]
         }
