@@ -36,11 +36,13 @@
                 const jsConfetti = new JSConfetti()
                 jsConfetti.addConfetti()
                 setPossibleLabel("You win!")
+                hide('addWordButtonStart')
                 setPossibleWords([])
             }else{
                 let matches = match(pattern, includeList, excludeList)
                 setPossibleLabel("Possible words:")
                 setPossibleWords(matches)
+                if(matches.length == 0) setPossibleLabel("No matches found!")
                 show('previousPane')
             }
         }
