@@ -257,8 +257,83 @@
             document.getElementById("possibleWordsLabel").innerHTML = text
         }
 
-        function setPossibleWords(words) {
-            document.getElementById("possibleWords").innerHTML = makeTable(words)
+        function setPossibleWords(possibleWords) {
+            document.getElementById("possibleWords").innerHTML = makeTable(possibleWords)
+            if (document.getElementById("possibleWordsLabel").innerHTML == "Possible words:") {
+                let spread = getLetterSpread(possibleWords)
+                if (spread.length > 0) {
+                    document.getElementById("possibleWords").innerHTML += "<div id='wordsLabel'>Common letters:</div>"
+                    document.getElementById("possibleWords").innerHTML += makeTable(formatLetterSpread(spread))
+                    let goodWords = findGoodWords(spread)
+                    if (goodWords.length > 0) {
+                        document.getElementById("possibleWords").innerHTML += "<div id='wordsLabel'>Suggestions:</div>"
+                        document.getElementById("possibleWords").innerHTML += makeTable(goodWords)
+                    }
+                }
+            }
+        }
+
+        function getLetterSpread(words) {
+            let letters = "abcdefghijklmnopqrstuvwxyz"
+            let spread = []
+            for (letterIndex in letters) {
+                let letter = letters[letterIndex]
+                for (wordIndex in words) {
+                    let word = words[wordIndex]
+                    if (word.includes(letter)) {
+                        if (spread[letter] === undefined) spread[letter] = 1
+                        else spread[letter] += 1
+                    }
+                }
+            }
+
+            var items = Object.keys(spread).map(function (key) {
+                return [key, spread[key]];
+            })
+            items = items.filter(function (v) {
+                return v[1] != words.length
+            })
+            items.sort(function (first, second) {
+                return second[1] - first[1];
+            })
+            let maxSlice = 6
+            if (items.length < maxSlice) maxSlice = items.length
+            items = items.slice(0, maxSlice)
+            for (let i = 0; i < items.length; i++) {
+                items[i][1] = parseFloat(items[i][1] / words.length * 100).toFixed(1) + "%"
+            }
+            return items
+        }
+
+        function formatLetterSpread(items) {
+            let ret = items.map(function (key) {
+                return key[0] + ": " + key[1]
+            })
+            return ret
+        }
+
+        function findGoodWords(spread) {
+            let ret = []
+            for (let i = 0; i < words.length; i++) {
+                let matches = 0
+                for (let a = 0; a < spread.length; a++) {
+                    if (words[i].includes(spread[a][0])) matches += 1
+                }
+                if (matches > spread.length / 2) ret.push(words[i])
+            }
+            let ret2 = []
+            for (let i = 0; i < ret.length; i++) {
+                let good = true
+                for (let a = 0; a < excludeList.length; a++) {
+                    if (ret[i].includes(excludeList[a])) {
+                        good = false
+                        continue
+                    }
+                }
+                if (good) ret2.push(ret[i])
+            }
+            ret2.sort()
+            return ret2
         }
 
     </script>
@@ -384,6 +459,10 @@
             margin-top: 5px;
         }
 
+        #wordsLabel {
+            margin-top: 15px;
+        }
+
         td {
             text-align: center;
         }
@@ -422,7 +501,7 @@
         </div>
     </center>
 
-    <div id="version">v1.0.0</div>
+    <div id="version">v1.1.0</div>
     <div id="signature">nic forzen</div>
 </body>
 
